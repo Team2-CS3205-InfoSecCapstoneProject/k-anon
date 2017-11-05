@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="/kanon/jquery/dist/jquery.min.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="<%= session[:csrf] %>">
+
+    <title>Medical Research Query Portal | </title>
+
+    <!-- Bootstrap -->
+    <link href="/kanon/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="/kanon/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="/kanon/animate.css/animate.min.css" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="/kanon/kanon/css/custom.css" rel="stylesheet">
+
+    <script src="/kanon/kanon/js/common.js"></script>
+    <script src="/kanon/kanon/js/register.js"></script>
+    <script src='https://www.google.com/recaptcha/api.js'></script>
+  </head>
+  <body class="login">
+  <div>
+    <a class="hiddenanchor" id="signup"></a>
+    <a class="hiddenanchor" id="signin"></a>
+   
+    <div class="login_title">
+    <h2><i class="fa fa-search"></i> Medical Research Query Portal</h2>
+    </div>
+
+    <div class="login_wrapper">
+      <div class="animate form login_form">
+        <section class="login_content">
+     
+          <form id="login_form" method="post" action="/kanon/auth/login">
+            <h1>Log In</h1>
+            <div>
+              <input type="text" class="form-control" name="user[username]" id="username" placeholder="Username" required="" />
+            </div>
+            <div>
+              <input type="password" class="form-control" name="user[password]" id="password" placeholder="Password" required="" />
+            </div>
+            <% if flash[:success] %>
+            <div style="color:green;">
+              <%= flash[:success] %>
+            </div>
+            <% end %>
+            <% if flash[:error] %>
+            <div style="color:red;">
+              <%= flash[:error] %>
+            </div>
+            <% end %>
+            <div>
+            <br />
+              <button type="submit" id="login" class="btn btn-default submit" onclick="validateLoginForm()">Log in</button>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <div class="separator">
+              <p class="change_link">New to site?
+                <a href="#signup" class="to_register"> Create Account </a>
+              </p>
+
+              <div class="clearfix"></div>
+              <br />
+
+              <div>
+                
+              <p>CS3205 Team 2<br /> Base design template by <a href="https://github.com/puikinsh/gentelella">Gentelella</a><br />© 2017 All Rights Reserved.</p>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+
+      <div id="register" class="animate form registration_form">
+        <section class="login_content">
+          <form id="register_form" action="/kanon/register" method="post">
+            <h1>Create Account</h1>
+            <input type="hidden" name="action" value="register" />
+            <div>
+              <input type="text" class="form-control" name="register[firstname]" placeholder="First name" required="" />
+            </div>
+            <div>
+              <input type="text" class="form-control" name="register[lastname]" placeholder="Last name" required="" />
+            </div>
+            <div>
+              <input type="text" class="form-control" name="register[username]" placeholder="Username" required="" />
+            </div>
+            <div>
+              <input type="password" id="newPassword" class="form-control" name="register[password]" placeholder="Password" required="" />
+            </div>
+            <div>
+              <input type="password" id="confirmNewPassword" class="form-control" name="register[confirmPassword]" placeholder="Confirm Password" required="" onChange="checkPasswordMatch();" />
+            </div>
+            <div class="g-recaptcha" data-sitekey="6LftODcUAAAAAB-rIJtnIYgm5byvAdmg_VjxQvz5"></div>
+            <br />
+            <div>
+              <div class="registrationFormAlert" id="divCheckPasswordMatch">
+            </div>
+            <% if flash[:success] %>
+            <div style="color:green;">
+              <%= flash[:success] %>
+            </div>
+            <% end %>
+            <% if flash[:error] %>
+            <div style="color:red;">
+              <%= flash[:error] %>
+            </div>
+            <% end %>
+            <div>
+              <button class="btn btn-default submit" id="registerButton" onclick="document.getElementById('register_form').submit()">Register Now</button>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <div class="separator">
+              <p class="change_link">Already a member ?
+                <a href="#signin" class="to_register"> Log in </a>
+              </p>
+
+              <div class="clearfix"></div>
+              <br />
+
+              <div>
+               <p>CS3205 Team 2<br /> Base design template by <a href="https://github.com/puikinsh/gentelella">Gentelella</a><br />© 2017 All Rights Reserved.</p>
+             </div>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+  </body>
+</html>

@@ -1,0 +1,121 @@
+
+<!-- page content -->
+<div class="right_col" role="main">
+    <div class="">
+    <div class="page-title">
+        <div class="title_left">
+        <h3>Permission</h3>
+        </div>
+
+        <div class="title_right">
+        <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+        </div>
+        </div>
+    </div>
+
+    <div class="clearfix"></div>
+
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <% if isAdmin %>
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Requested permission (Admin view)</h2>
+                        <!-- TODO: Toggle view based on user permission - j -->
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <form class="form-horizontal form-label-left" id="grant_permission_form" action="#" method="POST">
+                            <table id="datatable-checkbox" class="table table-striped table-bordered bulk_action">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                        </th>
+                                        <th>User name</th>
+                                        <th>Name</th>
+                                        <th>Qualification</th>
+                                        <th>Qualification name</th>
+                                        <th>Requested permission</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <% if !result.nil? %>
+                                        <% result.each do |item| %>
+                                            <tr>
+                                                <td>
+                                                    <input type="checkbox" id="check-all" class="flat" name="request[<%= item["researcher_id"]%>,<%= item["category_id"]%>]" <%= item["status"] != "Pending" ? 'disabled="disabled"' : '' %> <%= item["status"] == "Approved" ? 'checked="checked"' : '' %>>
+                                                </td>
+                                                <td><%= item["researcher_username"]%></td>
+                                                <td><%= item["name"]%></td>
+                                                <td><%= item["qualification"]%></td>
+                                                <td><%= item["qualification_name"]%></td>
+                                                <td><%= item["category_name"]%></td>
+                                                <td><%= item["status"]%></td>
+                                            </tr>
+                                        <% end %>
+                                    <% end %>
+                                </tbody>
+                            </table>
+
+                            <div class="ln_solid"></div>
+
+                            <% if flash[:success] %>
+                                <div style="color:green;">
+                                  <%= flash[:success] %>
+                                </div>
+                            <% end %>
+                            <% if flash[:error] %>
+                                <div style="color:red;">
+                                  <%= flash[:error] %>
+                                </div>
+                            <% end %>
+
+                            <div class="form-group">
+                                <div class="col-md-12 col-sm-12 col-xs-12">
+                                    <button type="submit" name="action" class="btn btn-primary" value="Decline">Decline</button>
+                                    <button type="submit" name="action" class="btn btn-success" value="Approve">Approve</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            <% else %>
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Requested permission (User view)</h2>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <table id="datatable" class="table table-striped table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Requested permission</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <% if !result.nil? %>
+                                    <% result.each do |item| %>
+                                        <tr>
+                                            <td><%= item["category_name"]%></td>
+                                            <td><%= item["status"]%></td>
+                                        </tr>
+                                    <% end %>
+                                <% end %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            <% end %>
+        </div>
+    </div>
+</div>
+<!-- /page content -->
+
+
+<!-- script for view.erb -->
+<script src="/kanon/kanon/js/permission.js"></script>

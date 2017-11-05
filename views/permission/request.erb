@@ -1,0 +1,68 @@
+
+<!-- page content -->
+<div class="right_col" role="main">
+    <div class="">
+        <div class="page-title">
+            <div class="title_left">
+                <h3>Request permission</h3>
+            </div>
+
+            <div class="title_right">
+                <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+                </div>
+            </div>
+        </div>
+
+        <div class="clearfix"></div>
+
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Permissions</h2>
+                        <div class="clearfix"></div>
+                    </div>
+
+                    <div class="x_content">
+                        <form class="form-horizontal form-label-left" id="request_permission_form" action="#" method="POST">
+                            <div class="form-group">
+                                <div class="col-md-12 col-sm-12 col-xs-12">
+                                    <% result.each do |item| %>
+                                        <div class="checkbox">
+                                            <label>
+                                                <input type="checkbox" class="flat" name="request[<%= item["category_id"]%>]" <%= item.key?("status") ? 'disabled="disabled"' : '' %> <%= item["status"] == "Approved" ? 'checked="checked"' : '' %>> <%= item["category_name"]%>
+                                            </label>
+                                        </div>
+                                    <% end %>
+                                </div>
+                            </div>
+
+                            <div class="ln_solid"></div>
+
+                            <% if flash[:success] %>
+                                <div style="color:green;">
+                                  <%= flash[:success] %>
+                                </div>
+                            <% end %>
+                            <% if flash[:error] %>
+                                <div style="color:red;">
+                                  <%= flash[:error] %>
+                                </div>
+                            <% end %>
+                            
+                            <div class="form-group">
+                                <div class="col-md-12 col-sm-12 col-xs-123">
+                                    <button type="submit" class="btn btn-success">Submit</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /page content -->
+
+<!-- script for request.erb -->
+<script src="/kanon/kanon/js/permission.js"></script>

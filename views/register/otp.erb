@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="/kanon/jquery/dist/jquery.min.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="<%= session[:csrf] %>">
+
+    <title>Medical Research Query Portal | </title>
+
+    <!-- Bootstrap -->
+    <link href="/kanon/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="/kanon/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <!-- NProgress -->
+    <link href="/kanon/nprogress/nprogress.css" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="/kanon/animate.css/animate.min.css" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="/kanon/kanon/css/custom.css" rel="stylesheet">
+    
+    <script src="/kanon/kanon/js/common.js"></script>
+    <script src="/kanon/kanon/js/register.js"></script>
+
+  </head>
+  <body class="login">
+  <div>
+    <div class="login_title">
+    <h2><i class="fa fa-search"></i> Medical Research Query Portal</h2>
+    </div>
+
+    <div class="login_wrapper"> 
+      <div class="form login_form">
+        <section class="login_content">
+          <form id="register_form" action="/kanon/register/otp" method="post">
+            <h1>Set up 2FA</h1>
+
+         
+            <p>Download the Google Authenticator app on your mobile device and scan the QR code below:</p>
+
+            <input type="hidden" name="action" value="register" />
+            <div><img class="otpQR" src=<%=h @image.to_data_url %> /></div>
+            <br />
+            <div>
+              <input type="text" class="form-control" id="otpCode" name="otp[number]" placeholder="Insert OTP number here" required="" />
+             
+              <a href="https://itunes.apple.com/sg/app/google-authenticator/id388497605?mt=8" ><img class="app_button" src="/kanon/kanon/images/download_appstore.png" /></a> &nbsp; &nbsp;
+              <a href="https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2&hl=en"><img class="app_button" src="/kanon/kanon/images/download_playstore.png" /></a>
+     
+              
+            </div>
+            <% if flash[:success] %>
+            <div style="color:green;">
+              <%= flash[:success] %>
+            </div>
+            <% end %>
+            <% if flash[:error] %>
+            <div style="color:red;">
+              <%= flash[:error] %>
+            </div>
+            <% end %>
+
+            <div>
+            <br />
+              <button class="btn btn-default submit" id="otpSubmitButton" onclick="validateOTPForm()">Submit</button>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <div class="separator">
+              <div class="clearfix"></div>
+              <br />
+              <div>
+               <p>CS3205 Team 2<br /> Base design template by <a href="https://github.com/puikinsh/gentelella">Gentelella</a><br />© 2017 All Rights Reserved.</p>
+             </div>
+            </div>
+          </form>
+        </section>
+      </div>
+    </div>
+  </div>
+
+
+
+  </body>
+</html>

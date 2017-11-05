@@ -1,0 +1,59 @@
+
+<!-- page content -->
+<div class="right_col" role="main">
+    <div class="">
+    <div class="page-title">
+        <div class="title_left">
+            <h3>Update Password</h3>
+        </div>
+
+        <div class="title_right">
+            <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+            </div>
+        </div>
+    </div>
+
+    <div class="clearfix"></div>
+
+    <div class="row">
+        <div class="col-md-6 col-sm-6 col-xs-6">
+          
+        <section class="login_content">
+        <form id="register_form" action="/kanon/update" method="post">
+          <input type="hidden" name="action" value="update_password" />
+          <div>
+            <input type="password" class="form-control" name="updatepassword[current]" placeholder="Existing Password" required="yes" />
+          </div>
+          <div>
+            <input type="password" id="newPassword" class="form-control" name="updatepassword[new]" placeholder="Password" required="" />
+          </div>
+          <div>
+            <input type="password" id="confirmNewPassword" class="form-control" name="updatepassword[new2]" placeholder="Confirm Password" required="" onChange="checkPasswordMatch();" />
+          </div>
+          <div>
+            <div class="registrationFormAlert" id="divCheckPasswordMatch">
+          </div>
+          <% if flash[:success] %>
+          <div style="color:green;">
+            <%= flash[:success] %>
+          </div>
+          <% end %>
+          <% if flash[:error] %>
+          <div style="color:red;">
+            <%= flash[:error] %>
+          </div>
+          <% end %>
+          <div>
+            <button class="btn btn-default submit" id="registerButton" onclick="document.getElementById('register_form').submit()">Update</button>
+          </div>
+
+
+        </form>
+      </section>
+
+        </div>
+    </div>
+</div>
+<!-- /page content -->
+
+<script src="/kanon/kanon/js/register.js"></script>

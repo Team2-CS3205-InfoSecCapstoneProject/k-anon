@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="/kanon/jquery/dist/jquery.min.js"></script>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="<%= session[:csrf] %>">
+
+    <title>Internal Server Error</title>
+
+    <link href="/kanon/jquery-ui/jquery-ui.min.css" rel="stylesheet">
+    <!-- Bootstrap -->
+    <link href="/kanon/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="/kanon/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <!-- NProgress -->
+    <link href="/kanon/nprogress/nprogress.css" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="/kanon/animate.css/animate.min.css" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="/kanon/kanon/css/custom.css" rel="stylesheet">
+  </head>
+	<body>
+		<div class="page-header">
+		  <h1>Internal Server Error <small>500</small></h1>
+		</div>
+
+		<p class="lead">Oops, this is embarrassing. 😣</p>
+
+
+		<p class="lead">Please inform team 2 about this and send them this link --> <%=h @sentryLink %> Thanks! 😘</p>
+  </body>
+</html>
