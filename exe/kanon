@@ -1,0 +1,5 @@
+#!/usr/bin/env ruby
+
+require "kanon"
+
+Kanon::WebApp.run!(:bind => "127.0.0.1", :port => "8080")
