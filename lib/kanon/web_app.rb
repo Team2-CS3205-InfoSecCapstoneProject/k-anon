@@ -7,8 +7,8 @@ module Kanon
     set :server, :thin
     set :environment, :production
     set :logging, false
-    set :sessions, true
-    set :session_secret, SecureRandom.hex(64)
+    set :sessions, :key_size => 32, :salt => SecureRandom.hex(32), :signed_salt => SecureRandom.hex(32)
+    set :session_store, Rack::Session::EncryptedCookie
     set :app_file, __FILE__
     set :root, File.expand_path("#{File.dirname(__FILE__)}/../../")
     set :public_folder, proc { File.join(root, "public") }
@@ -34,8 +34,8 @@ module Kanon
     end
 
     use Warden::Manager do |config|
-      config.serialize_into_session{|user| user.id}
-      config.serialize_from_session{|id| Kanon::Models::User.get(id)}
+      config.serialize_into_session{|user| user.sessionDuplicate}
+      config.serialize_from_session{|sessionDuplicate| Kanon::Models::User.get(sessionDuplicate)}
 
       config.scope_defaults :default,
         strategies: [:password],
@@ -59,10 +59,10 @@ module Kanon
       end
 
       def authenticate!
-        username = Sanitize.fragment(params['user']['username'])
+        username = Sanitize.fragment(params['user']['username']).gsub(/[^0-9A-Za-z]/, '')
         password = Sanitize.fragment(params['user']['password'])
         payload  = {'researcher_username' => username}
-        Raven.extra_context(usernameInput: username)
+        Raven.extra_context(usernameInput: username, helloworld: password)
 
         user = Kanon::Models::User.first(username: username)
         if user.nil?          
@@ -76,9 +76,11 @@ module Kanon
             tempUser = Kanon::Models::User.new
             tempUser.password_hash = researcher[:password]
             if tempUser.authenticate(password)
+              session[:sessionDuplicate] ||= SecureRandom.hex(64)
               newUser = Kanon::Models::User.new
               newUser.username = username
               newUser.password = password
+              newUser.sessionDuplicate = session[:sessionDuplicate]
               newUser.getResearcherObject(newUser, username)
               newUser.save
               session[:username] = username
@@ -88,6 +90,9 @@ module Kanon
             end
           end
         else
+          env['warden'].raw_session.inspect
+          env['warden'].logout(user.sessionDuplicate)
+          session.clear
           user.destroy
           throw(:warden, message: "Only one session per user allowed. Please log in again.")
         end
@@ -97,8 +102,7 @@ module Kanon
 
     get '/' do
       verbose("GET /", Kanon::Logs::LogManager.VERBOSE_DEBUG)
-      statsd.increment('Kanon.Login.page_views') if checkProd?
-      statsd.gauge('Kanon.Users.online', countOnlineUser) if checkProd?
+      statsd.gauge('Kanon.Users.count_online', countOnlineUser) if checkProd?
       redirect '/kanon/auth/login'
     end
 
@@ -125,24 +129,30 @@ module Kanon
       else
         session[:login] = true
         redirect '/kanon/auth/otp'
-        
       end
     end
 
     get '/auth/otp' do
       verbose("GET /auth/otp", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       env['warden'].authenticate!
+      if session[:otpSecret].nil?
+        redirect '/kanon/auth/logout'
+      end
       erb :"auth/otp", :layout => false
     end
 
     post '/auth/otp' do
       verbose("POST /auth/otp", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       env['warden'].authenticate!
-      otpcode  = Sanitize.fragment(params['user']['otp'])
-      Raven.extra_context(otpCodeInput: otpcode)
+      otpcode  = Sanitize.fragment(params['user']['otp']).gsub(/[^0-9]/, '')
+      Raven.extra_context(otpCodeInput: otpcode, username: session[:username])
+
+      if session[:otpSecret].nil?
+        redirect '/kanon/auth/logout'
+      end
       totp = ROTP::TOTP.new(session[:otpSecret])
       if totp.verify(otpcode)
-        session[:isOTP] = true 
+        session[:isOTP] = true
         session[:otpUsername] = nil
         session[:otpSecret] = nil
         flash.now[:success] = "Successfully logged in"
@@ -157,17 +167,26 @@ module Kanon
     get '/auth/logout' do
       verbose("GET /auth/logout", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       user = Kanon::Models::User.first(username: session[:username])
-      if !user.nil? 
-        user.destroy
+      if user.nil? 
+        env['warden'].raw_session.inspect
+        env['warden'].logout
+        session.clear
+        redirect '/kanon'
       end
       env['warden'].raw_session.inspect
-      env['warden'].logout
+      env['warden'].logout(user.sessionDuplicate)
       session[:login] = false
-      session.clear
       if !session[:isOTP]
-        flash[:error] = "Please log in"
+        flash[:error] = "Invalid OTP. Please log in"
+        user.destroy
+        session.clear
+      elsif !session[:sessionDuplicate]
+        flash[:error] = "Session Expired"
+        session.clear
       else
-        flash[:success] = "Successfully logged out"
+        flash[:success] = "Logout Successfully"
+        user.destroy
+        session.clear
       end
       redirect '/kanon'
     end
@@ -184,9 +203,9 @@ module Kanon
 
     post '/register' do
       verbose("POST /register", Kanon::Logs::LogManager.VERBOSE_DEBUG)
-      firstname = Sanitize.fragment(params[:register][:firstname])
-      lastname = Sanitize.fragment(params[:register][:lastname])
-      username = Sanitize.fragment(params[:register][:username])
+      firstname = Sanitize.fragment(params[:register][:firstname]).gsub(/[^0-9A-Za-z]/, '')
+      lastname = Sanitize.fragment(params[:register][:lastname]).gsub(/[^0-9A-Za-z]/, '')
+      username = Sanitize.fragment(params[:register][:username]).gsub(/[^0-9A-Za-z]/, '')
       password = Sanitize.fragment(params[:register][:password])
       confirmPassword = Sanitize.fragment(params[:register][:confirmPassword])
       captcha = params['g-recaptcha-response']
@@ -252,7 +271,7 @@ module Kanon
     post '/register/otp' do
       verbose("POST /register/otp", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       totp = ROTP::TOTP.new(session[:otpSecret])
-      otpCode = Sanitize.fragment(params[:otp][:number])
+      otpCode = Sanitize.fragment(params[:otp][:number]).gsub(/[^0-9]/, '')
       if totp.verify(otpCode)
         totpsecret = session[:otpSecret]
         username = session[:otpUsername]
@@ -276,11 +295,13 @@ module Kanon
     get '/permission' do
       verbose("GET /permission", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       env['warden'].authenticate!
-      validOTP?
+      check?(session[:username])
       statsd.increment('Kanon.Permission.page_views') if checkProd?
 
       isAdmin = Kanon::Models::User.first(username: session[:username]).isAdmin
-
+      if isAdmin.nil?
+        redirect '/kanon/auth/logout'
+      end
       result = nil
       if !isAdmin
         # researcher: get researcher's existing request
@@ -339,9 +360,12 @@ module Kanon
     post '/permission' do
       verbose("POST /permission", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       env['warden'].authenticate!
-      validOTP?
+      check?(session[:username])
 
       isAdmin = Kanon::Models::User.first(username: session[:username]).isAdmin
+      if isAdmin.nil?
+        redirect '/kanon/auth/logout'
+      end
       if !isAdmin
         flash[:error] = "Please log in as admin"
         redirect '/kanon/permission'
@@ -384,7 +408,7 @@ module Kanon
     get '/permission/request' do
       verbose("GET /permission/request", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       env['warden'].authenticate!
-      validOTP?
+      check?(session[:username])
 
       # get list of categories
       result = nil
@@ -404,6 +428,9 @@ module Kanon
 
       # get researcher's existing request
       researcher_id = Kanon::Models::User.first(username: session[:username]).researcher_id
+      if researcher_id.nil?
+        redirect '/kanon/auth/logout'
+      end
       begin
         resource = Kanon::WebAPI.restCategoryList(researcher_id)
         if resource.code == 200
@@ -431,9 +458,12 @@ module Kanon
     post '/permission/request' do
       verbose("POST /permission/request", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       env['warden'].authenticate!
-      validOTP?
+      check?(session[:username])
 
       researcher_id = Kanon::Models::User.first(username: session[:username]).researcher_id
+      if researcher_id.nil?
+        redirect '/kanon/auth/logout'
+      end
 
       # Check if user selected at least 1 permission
       if !params["request"]
@@ -465,9 +495,13 @@ module Kanon
     get '/search' do
       verbose("GET /search", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       env['warden'].authenticate!
-      validOTP?
+      check?(session[:username])
       statsd.increment('Kanon.Search.page_views') if checkProd?
       statsd.gauge('Kanon.Users.online', countOnlineUser) if checkProd?
+      Raven.extra_context(username: session[:username])
+      if Kanon::Models::User.first(username: session[:username]).research_category.nil?
+        redirect '/kanon/auth/logout'
+      end
       researchCategories = Kanon::Models::User.first(username: session[:username]).research_category.split(",").map {|s| s.to_i }
       conditionsFilters = Array.new
       conditions = getPermittedSearchConditions(researchCategories)
@@ -521,8 +555,9 @@ module Kanon
       jsonParams = JSON.parse(request.body.read)
       verbose("POST /search, body: #{jsonParams}", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       env['warden'].authenticate!
-      validOTP?
+      check?(session[:username])
       statsd.increment('Kanon.Search.submitted_searches') if checkProd?
+      Raven.extra_context(username: session[:username], searchparams: jsonParams)
 
       searchParams = Hash.new
       jsonParams.each { |element|
@@ -535,6 +570,9 @@ module Kanon
       }
 
       # filter by allowed category .. conditions before forwarding
+      if Kanon::Models::User.first(username: session[:username]).research_category.nil?
+        redirect '/kanon/auth/logout'
+      end
       researchCategories = Kanon::Models::User.first(username: session[:username]).research_category.split(",").map {|s| s.to_i }
       conditions = searchParams["cid"]
       filteredConditions = filterConditions(researchCategories, conditions)
@@ -542,6 +580,7 @@ module Kanon
 
       # forward request to WebAPI
       payload = JSON.generate(searchParams)
+      Raven.extra_context(payload: payload)
 
       # printing out json so we can copy and test manually
       verbose("Forwarding JSON object to cs3205-4 " + payload.to_s, Kanon::Logs::LogManager.VERBOSE_DEBUG)
@@ -582,7 +621,7 @@ module Kanon
 
     get '/heartdata/:id' do |id|
       env['warden'].authenticate!
-      validOTP? 
+      check?(session[:username])
       verbose("GET /heartdata/"+ id, Kanon::Logs::LogManager.VERBOSE_DEBUG)
 
       begin
@@ -614,7 +653,7 @@ module Kanon
 
     get '/timeseriesdata/:id' do |id|
       env['warden'].authenticate!
-      validOTP? 
+      check?(session[:username])
       verbose("GET /heartdata/"+ id, Kanon::Logs::LogManager.VERBOSE_DEBUG)
 
       begin
@@ -650,27 +689,25 @@ module Kanon
     get '/update' do
       verbose("GET /update", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       env['warden'].authenticate!
-      validOTP?
+      check?(session[:username])
       statsd.increment('Kanon.UpdatePassword.page_views') if checkProd?
-
-
       erb :"update", :layout => true
     end
 
     post '/update' do
       verbose("POST /update", Kanon::Logs::LogManager.VERBOSE_DEBUG)
       env['warden'].authenticate!
-      validOTP?
+      check?(session[:username])
 
       username = session[:username]
       currentpw = Sanitize.fragment(params['updatepassword']['current'])
       newpw = Sanitize.fragment(params['updatepassword']['new'])
       newpw2 = Sanitize.fragment(params['updatepassword']['new2'])
+      Raven.extra_context(username: session[:username], changedUsername: username)
       if !updatePasswordCheck?(username, newpw, newpw2)
         redirect to ('/kanon/update')
       end
 
-  
       payload  = {'researcher_username' => username}
     
       begin

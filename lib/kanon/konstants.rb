@@ -82,7 +82,7 @@ module Kanon
 		end
 
 		def self.sentryAPIKey()
-			return "#{SENTRY_API_KEY}/"
+			return "#{SENTRY_API_KEY}"
 		end
 
 		def self.sentryIssueAPI()

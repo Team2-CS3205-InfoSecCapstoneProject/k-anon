@@ -19,6 +19,7 @@ module Kanon
       Boolean :isAdmin
       String :qualification
       String :qualification_name
+      String :sessionDuplicate
     end
 
     class User < Sequel::Model

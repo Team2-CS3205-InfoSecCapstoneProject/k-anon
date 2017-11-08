@@ -30,6 +30,7 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "dogstatsd-ruby"
+  spec.add_dependency "rack_encrypted_cookie"
   spec.add_dependency "rack-protection"
   spec.add_dependency "rest-client"
   spec.add_dependency "rotp"

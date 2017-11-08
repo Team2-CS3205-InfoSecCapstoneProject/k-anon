@@ -204,8 +204,18 @@ module Kanon
       return noOfUsers
     end
 
-    def validOTP?
-      if !session[:isOTP]
+    def checkSession(username)
+      userSession = Kanon::Models::User.first(username: username).sessionDuplicate
+      if session[:sessionDuplicate] == userSession
+        return true
+      else
+        session[:sessionDuplicate] = false
+        return false
+      end
+    end
+
+    def check?(username)
+      if session[:username].nil? || !session[:isOTP] || !checkSession(username) || !session[:login]      
         redirect '/kanon/auth/logout'
       end
     end
