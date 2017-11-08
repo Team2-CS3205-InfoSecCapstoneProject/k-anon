@@ -1,6 +1,7 @@
 require "bcrypt"
 require 'datadog/statsd'
 require "json"
+require 'rack/session/encrypted_cookie'
 require "raven"
 require "rotp"
 require "rqrcode"
