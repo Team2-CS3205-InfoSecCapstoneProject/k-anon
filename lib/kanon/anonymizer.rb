@@ -3,19 +3,17 @@ module Kanon
 
 		def initialize(result)
 			if Kanon::Konstants.k != 0
-				if noOfResults?(result)
-				    # Generalize
-					result.each do |item|
-						item['ageRange'] = ageRange(item['dob'])
-						item.delete('dob')
-						item['zipcode1'] = zipcodeMask(item['zipcode1'])
-						item['heartrate_path'] = pseudoSuppressDatafile(item['heartrate_path'])
-						item['timeseries_path'] = pseudoSuppressDatafile(item['timeseries_path'])
-					end	
+				# Generalize
+				result.each do |item|
+					item['ageRange'] = ageRange(item['dob'])
+					item.delete('dob')
+					item['zipcode1'] = zipcodeMask(item['zipcode1'])
+					item['heartrate_path'] = pseudoSuppressDatafile(item['heartrate_path'])
+					item['timeseries_path'] = pseudoSuppressDatafile(item['timeseries_path'])
+				end	
 
-					# Suppress to ensure at least k records for each set of $quasi_identifiers
-					suppress(result)
-				end
+				# Suppress to ensure at least k records for each set of $quasi_identifiers
+				suppress(result)
 			else
 				result.each do |item|
 					item['ageRange'] = item['dob']
