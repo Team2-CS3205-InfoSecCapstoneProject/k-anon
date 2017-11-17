@@ -566,6 +566,23 @@ module Kanon
           unless searchParams.key?(key)
               searchParams[key] = Array.new
           end
+
+          if key == 'ageRange'
+            case value
+            when '0-10'
+            when '11-20'
+            when '21-30'
+            when '31-40'
+            when '41-50'
+            when '51-60'
+            when '61-70'
+            when '71-80'
+            when '81-90'
+            when '91-200'
+            else redirect '/kanon/search'
+            end
+          end
+
           searchParams[key].push(value)
       }
 
